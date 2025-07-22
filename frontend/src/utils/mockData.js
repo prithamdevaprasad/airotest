@@ -2,37 +2,10 @@
 import { parseFzpFile } from './parseFzp';
 
 export const loadRealFritzingParts = async () => {
-  // List of some popular parts to load from the actual fritzing-parts repo
-  const partsToLoad = [
-    'sparkfun-led-led-10mm_fix.fzp',
-    'led-rgb-4pin-anode_rbg_v5.fzp',
-    'resistor.fzp',
-    'resistor_5band.fzp',
-    'arduino_uno(rev3)-icsp.fzp',
-    'Arduino_Leonardo_Rev3(fix).fzp',
-    'Arduino Nano3(fix).fzp',
-    'breadboard.fzp',
-    '555timer.fzp',
-    'capacitor_electrolytic_large.fzp',
-    'sparkfun-discretesemi-transistor_npn-to92.fzp',
-    'pushbutton_4_horizontal.fzp',
-    'LilyPad_LED-v14.fzp'
-  ];
-
-  const loadedParts = [];
-  
-  for (const partFile of partsToLoad) {
-    try {
-      const fzpPath = `/fritzing-parts/core/${partFile}`;
-      const part = await parseFzpFile(fzpPath);
-      part.id = partFile.replace('.fzp', '');
-      loadedParts.push(part);
-    } catch (error) {
-      console.warn(`Failed to load ${partFile}:`, error);
-    }
-  }
-  
-  return loadedParts;
+  // For now, return empty array to use mock data
+  // The fritzing-parts repository is available at /app/public/parts/
+  // This can be extended later with a proper backend API
+  return [];
 };
 
 export const mockParts = [
