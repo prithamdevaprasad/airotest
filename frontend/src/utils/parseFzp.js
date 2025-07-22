@@ -52,7 +52,7 @@ export const parseFzpFile = async (fzpPath) => {
       if (layers) {
         const imageAttr = layers.getAttribute('image');
         if (imageAttr) {
-          imagePath = `/parts/svg/core/${imageAttr}`;
+          imagePath = `/fritzing-parts/svg/core/${imageAttr}`;
         }
       }
     }
