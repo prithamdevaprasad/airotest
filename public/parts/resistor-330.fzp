@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module fritzingVersion="0.9.0" moduleId="resistor-330" referenceFile="resistor-330.fzp">
+  <title>330Ω Resistor</title>
+  <description>A 330 ohm through-hole resistor</description>
+  <author>Sample Author</author>
+  <date>2024-01-01</date>
+  <tags>
+    <tag>resistor</tag>
+    <tag>330</tag>
+    <tag>ohm</tag>
+  </tags>
+  <properties>
+    <property name="family">Resistor</property>
+    <property name="resistance">330Ω</property>
+    <property name="tolerance">±5%</property>
+    <property name="power">0.25W</property>
+  </properties>
+  <views>
+    <breadboardView>
+      <layers image="breadboard/resistor-330-breadboard.svg">
+        <layer layerId="breadboard"/>
+      </layers>
+    </breadboardView>
+  </views>
+  <connectors>
+    <connector id="connector0" name="pin0" type="male">
+      <description>pin</description>
+      <views>
+        <breadboardView>
+          <p layer="breadboard" svgId="connector0pin" terminalId="connector0terminal"/>
+        </breadboardView>
+      </views>
+    </connector>
+    <connector id="connector1" name="pin1" type="male">
+      <description>pin</description>
+      <views>
+        <breadboardView>
+          <p layer="breadboard" svgId="connector1pin" terminalId="connector1terminal"/>
+        </breadboardView>
+      </views>
+    </connector>
+  </connectors>
+</module>
