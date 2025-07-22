@@ -2,11 +2,24 @@
 export const parseFzpFile = async (fzpPath) => {
   try {
     const response = await fetch(fzpPath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${fzpPath}: ${response.status}`);
+    }
     const xmlText = await response.text();
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, "text/xml");
     
+    // Check for XML parsing errors
+    const parseError = xmlDoc.querySelector('parsererror');
+    if (parseError) {
+      throw new Error(`XML parse error: ${parseError.textContent}`);
+    }
+    
     const module = xmlDoc.querySelector('module');
+    if (!module) {
+      throw new Error('No module element found in FZP file');
+    }
+    
     const title = xmlDoc.querySelector('title')?.textContent || '';
     const description = xmlDoc.querySelector('description')?.textContent || '';
     const author = xmlDoc.querySelector('author')?.textContent || '';
@@ -33,7 +46,16 @@ export const parseFzpFile = async (fzpPath) => {
     
     // Parse breadboard view
     const breadboardView = xmlDoc.querySelector('breadboardView');
-    const imagePath = breadboardView?.querySelector('layers')?.getAttribute('image') || '';
+    let imagePath = '';
+    if (breadboardView) {
+      const layers = breadboardView.querySelector('layers');
+      if (layers) {
+        const imageAttr = layers.getAttribute('image');
+        if (imageAttr) {
+          imagePath = `/parts/svg/core/${imageAttr}`;
+        }
+      }
+    }
     
     // Parse connectors
     const connectors = [];
@@ -66,7 +88,7 @@ export const parseFzpFile = async (fzpPath) => {
       author,
       properties,
       tags,
-      imagePath: imagePath ? `/parts/${imagePath}` : '',
+      imagePath,
       connectors
     };
   } catch (error) {
