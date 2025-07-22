@@ -31,14 +31,14 @@ const CanvasEditor = ({ project, onProjectUpdate, className }) => {
 
   // Update parent when project changes
   useEffect(() => {
-    if (onProjectUpdate) {
+    if (onProjectUpdate && project) {
       onProjectUpdate({
         ...project,
         parts,
         wires
       });
     }
-  }, [parts, wires, project, onProjectUpdate]);
+  }, [parts, wires]); // Remove project and onProjectUpdate from deps to avoid infinite loop
 
   // Handle mouse events
   const handleMouseMove = useCallback((event) => {
