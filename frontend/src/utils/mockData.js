@@ -23,7 +23,7 @@ export const loadRealFritzingParts = async () => {
   
   for (const partFile of partsToLoad) {
     try {
-      const fzpPath = `/parts/core/${partFile}`;
+      const fzpPath = `/fritzing-parts/core/${partFile}`;
       const part = await parseFzpFile(fzpPath);
       part.id = partFile.replace('.fzp', '');
       loadedParts.push(part);
