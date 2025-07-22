@@ -2,6 +2,7 @@ import os
 import xml.etree.ElementTree as ET
 from typing import List, Optional, Dict, Any
 from pathlib import Path
+from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorCollection
 from models.part import FritzingPart, PartCreate, PartUpdate, Connector
 
