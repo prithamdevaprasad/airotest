@@ -1,55 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Package, Tag, Loader2 } from 'lucide-react';
+import { Search, Package, Tag, Loader2, RefreshCw } from 'lucide-react';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { mockParts, loadRealFritzingParts } from '../utils/mockData';
+import { Button } from './ui/button';
+import { useParts } from '../hooks/useParts';
+import { useToast } from '../hooks/use-toast';
 
 const PartLibrary = ({ onPartSelect, className }) => {
-  const [parts, setParts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { parts, families, loading, error, loadFritzingParts, refetch } = useParts();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFamily, setSelectedFamily] = useState('all');
   const [filteredParts, setFilteredParts] = useState([]);
-  const [loadError, setLoadError] = useState(null);
-
-  useEffect(() => {
-    const loadParts = async () => {
-      try {
-        setLoading(true);
-        setLoadError(null);
-        
-        // Try to load real Fritzing parts first, fallback to mock data if it fails
-        let loadedParts = [];
-        try {
-          loadedParts = await loadRealFritzingParts();
-          console.log('Successfully loaded', loadedParts.length, 'real Fritzing parts');
-        } catch (error) {
-          console.warn('Failed to load real parts, using mock data:', error);
-          loadedParts = mockParts;
-        }
-        
-        // If no parts loaded, use mock data as fallback
-        if (loadedParts.length === 0) {
-          console.log('No parts loaded, using mock data as fallback');
-          loadedParts = mockParts;
-        }
-        
-        setParts(loadedParts);
-        setFilteredParts(loadedParts);
-      } catch (error) {
-        console.error('Error loading parts:', error);
-        setLoadError(error.message);
-        // Use mock data as ultimate fallback
-        setParts(mockParts);
-        setFilteredParts(mockParts);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadParts();
-  }, []);
+  const [loadingFritzing, setLoadingFritzing] = useState(false);
 
   useEffect(() => {
     let filtered = parts;
@@ -73,11 +37,28 @@ const PartLibrary = ({ onPartSelect, className }) => {
     setFilteredParts(filtered);
   }, [parts, searchTerm, selectedFamily]);
 
-  const families = ['all', ...new Set(parts.map(part => part.properties?.family).filter(Boolean))];
-
   const handleDragStart = (event, part) => {
     event.dataTransfer.setData('application/json', JSON.stringify(part));
     event.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleLoadFritzingParts = async () => {
+    try {
+      setLoadingFritzing(true);
+      const result = await loadFritzingParts(false);
+      toast({
+        title: "Parts Loaded",
+        description: `Successfully loaded ${result.parts_loaded} Fritzing parts`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load Fritzing parts",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingFritzing(false);
+    }
   };
 
   if (loading) {
@@ -92,8 +73,8 @@ const PartLibrary = ({ onPartSelect, className }) => {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-500" />
-            <p className="text-gray-600">Loading Fritzing parts...</p>
-            <p className="text-sm text-gray-400 mt-1">Parsing .fzp files</p>
+            <p className="text-gray-600">Loading parts...</p>
+            <p className="text-sm text-gray-400 mt-1">Connecting to backend</p>
           </div>
         </div>
       </div>
@@ -103,17 +84,53 @@ const PartLibrary = ({ onPartSelect, className }) => {
   return (
     <div className={`bg-white border-r border-gray-200 flex flex-col ${className}`}>
       <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Package size={20} />
-          Parts Library
-          <Badge variant="secondary" className="text-xs">
-            {parts.length} parts
-          </Badge>
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Package size={20} />
+            Parts Library
+            <Badge variant="secondary" className="text-xs">
+              {parts.length} parts
+            </Badge>
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refetch}
+            disabled={loading}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
+        </div>
         
-        {loadError && (
+        {error && (
           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-            Warning: Using fallback data. {loadError}
+            {error}
+          </div>
+        )}
+
+        {parts.length === 0 && !loading && (
+          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm text-blue-800 mb-2">
+              No parts loaded. Load parts from the Fritzing repository:
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoadFritzingParts}
+              disabled={loadingFritzing}
+              className="w-full"
+            >
+              {loadingFritzing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading Fritzing Parts...
+                </>
+              ) : (
+                'Load Fritzing Parts'
+              )}
+            </Button>
           </div>
         )}
         
@@ -149,7 +166,7 @@ const PartLibrary = ({ onPartSelect, className }) => {
         <div className="p-4 space-y-3">
           {filteredParts.map(part => (
             <div
-              key={part.id || part.moduleId}
+              key={part.id || part.module_id}
               className="bg-gray-50 rounded-lg p-3 cursor-grab hover:bg-gray-100 transition-colors border border-gray-200 hover:border-blue-300 hover:shadow-sm"
               draggable
               onDragStart={(e) => handleDragStart(e, part)}
@@ -157,9 +174,9 @@ const PartLibrary = ({ onPartSelect, className }) => {
             >
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 bg-white rounded border border-gray-200 flex items-center justify-center overflow-hidden">
-                  {part.imagePath ? (
+                  {part.image_path ? (
                     <img
-                      src={part.imagePath}
+                      src={part.image_path}
                       alt={part.title}
                       className="max-w-full max-h-full object-contain"
                       style={{ width: '40px', height: '40px' }}
@@ -172,7 +189,7 @@ const PartLibrary = ({ onPartSelect, className }) => {
                   <Package 
                     size={20} 
                     className="text-gray-400" 
-                    style={{ display: part.imagePath ? 'none' : 'block' }}
+                    style={{ display: part.image_path ? 'none' : 'block' }}
                   />
                 </div>
                 
@@ -210,7 +227,7 @@ const PartLibrary = ({ onPartSelect, className }) => {
             </div>
           ))}
           
-          {filteredParts.length === 0 && !loading && (
+          {filteredParts.length === 0 && !loading && parts.length > 0 && (
             <div className="text-center py-8 text-gray-500">
               <Package size={48} className="mx-auto mb-3 text-gray-300" />
               <p>No parts found</p>
